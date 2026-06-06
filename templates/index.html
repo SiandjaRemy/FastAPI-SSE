@@ -1,63 +1,526 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>System Monitor</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"
+    />
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .dashboard { background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 400px; text-align: center; }
-        h1 { margin-top: 0; }
-        .metric { margin-bottom: 1.5rem; }
-        .metric-label { font-weight: bold; font-size: 1.2rem; margin-bottom: 0.5rem; }
-        .progress-bar { width: 100%; background-color: #e9ecef; border-radius: 4px; overflow: hidden; }
-        .progress-bar-fill { height: 20px; background-color: #007bff; width: 0%; transition: width 0.5s ease-in-out; }
-        .metric-value { margin-top: 0.5rem; font-size: 1rem; color: #555; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #ffffff;
+        --bg-2: #f5f4f0;
+        --bg-3: #eeece8;
+        --text: #1a1917;
+        --text-2: #6b6860;
+        --border: rgba(0, 0, 0, 0.1);
+        --border-2: rgba(0, 0, 0, 0.18);
+        --blue: #185fa5;
+        --amber: #ba7517;
+        --red: #a32d2d;
+        --green: #3b6d11;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1a1917;
+          --bg-2: #242220;
+          --bg-3: #2c2a28;
+          --text: #e8e6e0;
+          --text-2: #888680;
+          --border: rgba(255, 255, 255, 0.08);
+          --border-2: rgba(255, 255, 255, 0.15);
+          --blue: #85b7eb;
+          --amber: #fac775;
+          --red: #f09595;
+          --green: #97c459;
+        }
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg-3);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+      }
+
+      .page {
+        max-width: 760px;
+        margin: 0 auto;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+      }
+      .header h1 {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-2);
+        transition: background 0.4s;
+      }
+      .dot.live {
+        background: var(--green);
+        animation: blink 2s infinite;
+      }
+      .dot.error {
+        background: var(--red);
+        animation: none;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      #status-label {
+        color: var(--text-2);
+        transition: color 0.3s;
+      }
+      #status-label.live {
+        color: var(--green);
+      }
+      #status-label.error {
+        color: var(--red);
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .card {
+        background: var(--bg-2);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+      }
+      .card-label {
+        font-size: 12px;
+        color: var(--text-2);
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .card-value {
+        font-size: 28px;
+        font-weight: 500;
+        line-height: 1;
+        margin-bottom: 4px;
+        transition: color 0.4s;
+      }
+      .card-sub {
+        font-size: 12px;
+        color: var(--text-2);
+      }
+
+      .panel {
+        background: var(--bg);
+        border: 0.5px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 12px;
+      }
+      .panel-title {
+        font-size: 12px;
+        color: var(--text-2);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .bar-row:last-child {
+        margin-bottom: 0;
+      }
+      .bar-name {
+        font-size: 12px;
+        color: var(--text-2);
+        width: 58px;
+        flex-shrink: 0;
+      }
+      .bar-track {
+        flex: 1;
+        height: 6px;
+        background: var(--bg-3);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        width: 0%;
+        transition:
+          width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+          background 0.4s;
+      }
+      .bar-pct {
+        font-size: 12px;
+        font-weight: 500;
+        width: 40px;
+        text-align: right;
+        color: var(--text);
+      }
+
+      .mem-detail {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 0.5px solid var(--border);
+      }
+      .mem-item {
+        font-size: 12px;
+        color: var(--text-2);
+      }
+      .mem-item span {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text);
+        margin-top: 2px;
+      }
+
+      .spark-wrap {
+        margin-top: 6px;
+      }
+      canvas#spark {
+        display: block;
+        width: 100%;
+        height: 40px;
+      }
+
+      .error-message {
+        background: var(--red);
+        color: white;
+        padding: 12px;
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+        text-align: center;
+      }
     </style>
-</head>
-<body>
-    <div class="dashboard">
-        <h1>Real-Time Server Monitor</h1>
-        <div class="metric">
-            <div class="metric-label">CPU Usage</div>
-            <div class="progress-bar">
-                <div id="cpu-progress" class="progress-bar-fill"></div>
-            </div>
-            <div id="cpu-value" class="metric-value">0%</div>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <h1>System monitor</h1>
+        <div class="status">
+          <div class="dot" id="dot"></div>
+          <span id="status-label">connecting…</span>
+          <span id="uptime"></span>
         </div>
-        <div class="metric">
-            <div class="metric-label">Memory Usage</div>
-            <div class="progress-bar">
-                <div id="mem-progress" class="progress-bar-fill" style="background-color: #28a745;"></div>
-            </div>
-            <div id="mem-value" class="metric-value">0% (0 / 0 MB)</div>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="card-label"><i class="ti ti-cpu"></i> CPU usage</div>
+          <div class="card-value" id="cpu-val">—</div>
+          <div class="card-sub" id="cpu-sub">waiting…</div>
         </div>
+        <div class="card">
+          <div class="card-label">
+            <i class="ti ti-layers-subtract"></i> Memory
+          </div>
+          <div class="card-value" id="mem-val">—</div>
+          <div class="card-sub" id="mem-sub">waiting…</div>
+        </div>
+        <div class="card">
+          <div class="card-label">
+            <i class="ti ti-trending-up"></i> CPU peak
+          </div>
+          <div class="card-value" id="peak-val">—</div>
+          <div class="card-sub">this session</div>
+        </div>
+        <div class="card">
+          <div class="card-label"><i class="ti ti-activity"></i> Avg CPU</div>
+          <div class="card-value" id="avg-val">—</div>
+          <div class="card-sub">last 10 readings</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><i class="ti ti-cpu"></i> CPU cores</div>
+        <div id="cores-container"></div>
+        <div class="spark-wrap">
+          <div class="panel-title" style="margin-top: 14px; margin-bottom: 6px">
+            <i class="ti ti-chart-line"></i> CPU history (last 30s)
+          </div>
+          <canvas id="spark" height="40"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          <i class="ti ti-layers-subtract"></i> Memory breakdown
+        </div>
+        <div class="bar-row">
+          <div class="bar-name">Used</div>
+          <div class="bar-track"><div class="bar-fill" id="mem-bar"></div></div>
+          <div class="bar-pct" id="mem-bar-pct">—</div>
+        </div>
+        <div class="mem-detail">
+          <div class="mem-item">Used<span id="mem-used">—</span></div>
+          <div class="mem-item">Free<span id="mem-free">—</span></div>
+          <div class="mem-item">Total<span id="mem-total">—</span></div>
+        </div>
+      </div>
     </div>
+
     <script>
-        const cpuProgress = document.getElementById('cpu-progress');
-        const cpuValue = document.getElementById('cpu-value');
-        const memProgress = document.getElementById('mem-progress');
-        const memValue = document.getElementById('mem-value');
+      const cpuHistory = [];
+      let peak = 0;
+      let coresRendered = false;
+      let reconnectAttempts = 0;
 
-        const eventSource = new EventSource('http://localhost:8000/system-stats');
+      function colorFor(pct) {
+        if (pct > 85) return "var(--red)";
+        if (pct > 60) return "var(--amber)";
+        return "var(--blue)";
+      }
 
-        eventSource.onmessage = function(event) {
-            // Parse the JSON data from the server
-            const stats = JSON.parse(event.data);
+      function fmtMB(mb) {
+        return mb >= 1024
+          ? (mb / 1024).toFixed(1) + " GB"
+          : Math.round(mb) + " MB";
+      }
 
-            // Update CPU elements
-            cpuProgress.style.width = stats.cpu_percent + '%';
-            cpuValue.textContent = stats.cpu_percent.toFixed(2) + '%';
+      function drawSpark() {
+        const canvas = document.getElementById("spark");
+        if (!canvas) return;
 
-            // Update Memory elements
-            memProgress.style.width = stats.memory_percent + '%';
-            memValue.textContent = `${stats.memory_percent.toFixed(2)}% (${stats.memory_used_mb} / ${stats.memory_total_mb} MB)`;
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.clientWidth;
+        const h = 40;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        const ctx = canvas.getContext("2d");
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, w, h);
+
+        if (cpuHistory.length < 2) return;
+
+        ctx.beginPath();
+        ctx.strokeStyle = getComputedStyle(document.documentElement)
+          .getPropertyValue("--blue")
+          .trim();
+        ctx.lineWidth = 1.5;
+
+        cpuHistory.forEach((v, i) => {
+          const x = (i / (cpuHistory.length - 1)) * w;
+          const y = h - (v / 100) * h * 0.85 - h * 0.075;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      function renderCores(count) {
+        const container = document.getElementById("cores-container");
+        if (!container) return;
+
+        container.innerHTML = "";
+        for (let i = 0; i < count; i++) {
+          const div = document.createElement("div");
+          div.className = "bar-row";
+          div.innerHTML = `
+        <div class="bar-name">Core ${i}</div>
+        <div class="bar-track">
+          <div class="bar-fill" id="core-bar-${i}"></div>
+        </div>
+        <div class="bar-pct" id="core-pct-${i}">—</div>
+      `;
+          container.appendChild(div);
+        }
+        coresRendered = true;
+      }
+
+      function updateUI(stats) {
+        const cpu = stats.cpu_percent;
+        const memPct = stats.memory_percent;
+        const usedMB = stats.memory_used_mb;
+        const totalMB = stats.memory_total_mb;
+        const freeMB = totalMB - usedMB;
+        const cores = stats.cpu_per_core || [];
+
+        cpuHistory.push(cpu);
+        if (cpuHistory.length > 15) cpuHistory.shift();
+
+        if (cpu > peak) peak = cpu;
+        const avg = cpuHistory.reduce((a, b) => a + b, 0) / cpuHistory.length;
+
+        // Update connection status
+        const dot = document.getElementById("dot");
+        const label = document.getElementById("status-label");
+        dot.className = "dot live";
+        label.className = "live";
+        label.textContent = "live";
+        reconnectAttempts = 0;
+
+        // CPU card
+        const cpuColor = colorFor(cpu);
+        const cpuVal = document.getElementById("cpu-val");
+        if (cpuVal) {
+          cpuVal.textContent = cpu.toFixed(1) + "%";
+          cpuVal.style.color = cpuColor;
+        }
+        const cpuSub = document.getElementById("cpu-sub");
+        if (cpuSub) {
+          cpuSub.textContent =
+            cpu > 85 ? "high load" : cpu > 60 ? "moderate" : "nominal";
+        }
+
+        // Memory card
+        const memVal = document.getElementById("mem-val");
+        if (memVal) {
+          memVal.textContent = memPct.toFixed(1) + "%";
+          memVal.style.color = colorFor(memPct);
+        }
+        const memSub = document.getElementById("mem-sub");
+        if (memSub) memSub.textContent = fmtMB(usedMB) + " used";
+
+        // Peak and avg
+        const peakVal = document.getElementById("peak-val");
+        if (peakVal) {
+          peakVal.textContent = peak.toFixed(1) + "%";
+          peakVal.style.color = colorFor(peak);
+        }
+        const avgVal = document.getElementById("avg-val");
+        if (avgVal) avgVal.textContent = avg.toFixed(1) + "%";
+
+        // Core bars
+        if (cores && cores.length > 0) {
+          if (!coresRendered) renderCores(cores.length);
+          cores.forEach((pct, i) => {
+            const bar = document.getElementById("core-bar-" + i);
+            const lbl = document.getElementById("core-pct-" + i);
+            if (bar) {
+              bar.style.width = pct.toFixed(1) + "%";
+              bar.style.background = colorFor(pct);
+            }
+            if (lbl) lbl.textContent = pct.toFixed(1) + "%";
+          });
+        }
+
+        // Memory bar
+        const memBar = document.getElementById("mem-bar");
+        if (memBar) {
+          memBar.style.width = memPct.toFixed(1) + "%";
+          memBar.style.background = colorFor(memPct);
+        }
+        const memBarPct = document.getElementById("mem-bar-pct");
+        if (memBarPct) memBarPct.textContent = memPct.toFixed(1) + "%";
+
+        const memUsed = document.getElementById("mem-used");
+        if (memUsed) memUsed.textContent = fmtMB(usedMB);
+        const memFree = document.getElementById("mem-free");
+        if (memFree) memFree.textContent = fmtMB(freeMB);
+        const memTotal = document.getElementById("mem-total");
+        if (memTotal) memTotal.textContent = fmtMB(totalMB);
+
+        drawSpark();
+      }
+
+      // SSE Connection
+      let eventSource = null;
+
+      function connectSSE() {
+        if (eventSource) {
+          eventSource.close();
+        }
+
+        // Use relative URL - serve everything from same origin (port 8000)
+        eventSource = new EventSource("/system-stats");
+
+        eventSource.onopen = function () {
+          console.log("SSE connected");
+          const dot = document.getElementById("dot");
+          const label = document.getElementById("status-label");
+          if (dot) dot.className = "dot live";
+          if (label) {
+            label.className = "live";
+            label.textContent = "live";
+          }
         };
 
-        eventSource.onerror = function(err) {
-            console.error("EventSource failed:", err);
-            cpuValue.textContent = "Connection Error";
-            memValue.textContent = "Connection Error";
+        eventSource.onmessage = function (event) {
+          try {
+            const data = JSON.parse(event.data);
+            updateUI(data);
+          } catch (e) {
+            console.error("Parse error:", e);
+          }
         };
+
+        eventSource.onerror = function () {
+          console.error("SSE error");
+          const dot = document.getElementById("dot");
+          const label = document.getElementById("status-label");
+          if (dot) dot.className = "dot error";
+          if (label) {
+            label.className = "error";
+            label.textContent = "reconnecting…";
+          }
+
+          // Auto reconnect
+          setTimeout(() => {
+            connectSSE();
+          }, 3000);
+        };
+      }
+
+      // Uptime counter
+      let uptimeSec = 0;
+      setInterval(() => {
+        uptimeSec++;
+        const h = Math.floor(uptimeSec / 3600);
+        const m = Math.floor((uptimeSec % 3600) / 60);
+        const s = uptimeSec % 60;
+        const uptimeEl = document.getElementById("uptime");
+        if (uptimeEl) {
+          uptimeEl.textContent =
+            (h ? h + "h " : "") + (m ? m + "m " : "") + s + "s";
+        }
+      }, 1000);
+
+      // Start connection
+      connectSSE();
     </script>
-</body>
+  </body>
 </html>
