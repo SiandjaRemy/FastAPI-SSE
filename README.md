@@ -3,7 +3,8 @@
 A lightweight system monitor that streams live CPU and memory stats to the browser using **Server-Sent Events (SSE)** — no WebSockets, no JavaScript framework, no database.
 
 
-![Demo Video](./FastAPI-SSE-demo.webm)
+
+<video src="https://github.com/user-attachments/assets/92ae748d-5282-4c1d-8057-b6788cd2181e" controls width="100%"></video>
 
 ---
 
