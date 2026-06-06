@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Monitor</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; color: #333; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .dashboard { background-color: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+        h1 { margin-top: 0; }
+        .metric { margin-bottom: 1.5rem; }
+        .metric-label { font-weight: bold; font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .progress-bar { width: 100%; background-color: #e9ecef; border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 20px; background-color: #007bff; width: 0%; transition: width 0.5s ease-in-out; }
+        .metric-value { margin-top: 0.5rem; font-size: 1rem; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Real-Time Server Monitor</h1>
+        <div class="metric">
+            <div class="metric-label">CPU Usage</div>
+            <div class="progress-bar">
+                <div id="cpu-progress" class="progress-bar-fill"></div>
+            </div>
+            <div id="cpu-value" class="metric-value">0%</div>
+        </div>
+        <div class="metric">
+            <div class="metric-label">Memory Usage</div>
+            <div class="progress-bar">
+                <div id="mem-progress" class="progress-bar-fill" style="background-color: #28a745;"></div>
+            </div>
+            <div id="mem-value" class="metric-value">0% (0 / 0 MB)</div>
+        </div>
+    </div>
+    <script>
+        const cpuProgress = document.getElementById('cpu-progress');
+        const cpuValue = document.getElementById('cpu-value');
+        const memProgress = document.getElementById('mem-progress');
+        const memValue = document.getElementById('mem-value');
+
+        const eventSource = new EventSource('http://localhost:8000/system-stats');
+
+        eventSource.onmessage = function(event) {
+            // Parse the JSON data from the server
+            const stats = JSON.parse(event.data);
+
+            // Update CPU elements
+            cpuProgress.style.width = stats.cpu_percent + '%';
+            cpuValue.textContent = stats.cpu_percent.toFixed(2) + '%';
+
+            // Update Memory elements
+            memProgress.style.width = stats.memory_percent + '%';
+            memValue.textContent = `${stats.memory_percent.toFixed(2)}% (${stats.memory_used_mb} / ${stats.memory_total_mb} MB)`;
+        };
+
+        eventSource.onerror = function(err) {
+            console.error("EventSource failed:", err);
+            cpuValue.textContent = "Connection Error";
+            memValue.textContent = "Connection Error";
+        };
+    </script>
+</body>
+</html>
