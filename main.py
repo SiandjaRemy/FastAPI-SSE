@@ -10,10 +10,8 @@ from fastapi.templating import Jinja2Templates
 templates = Jinja2Templates(directory="templates")
 
 
-# Define app FIRST
 app = FastAPI()
 
-# Then add middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:8080"],
@@ -49,8 +47,6 @@ async def stream_system_stats(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    # with open("index.html") as f:
-    #     return HTMLResponse(content=f.read())
     return templates.TemplateResponse(
         request=request, name="index.html"
     )
